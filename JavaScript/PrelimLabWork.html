@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Prelim Lab Work 3 — Calculator</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --teal: #9BE9D8;
+      --purple: #69328F;
+    }
+    body {
+      background: var(--teal);
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 28px;
+      color: #222;
+    }
+    .card {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #fff;
+      border: 3px solid var(--purple);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+    h1 { color: var(--purple); text-align: center; margin: 0 0 18px 0; }
+    .row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    label {
+      width: 220px;
+      font-weight: 600;
+      color: var(--purple);
+    }
+    input[type="number"] {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 2px solid var(--purple);
+      font-size: 16px;
+    }
+    .controls { display: flex; justify-content: center; margin-top: 14px; }
+    button {
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(.95); }
+    #results {
+      margin-top: 18px;
+      background: #e7f7f5;
+      border: 2px solid var(--purple);
+      padding: 12px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+    }
+    .muted { color: #555; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Prelim Exam Score Calculator</h1>
+
+    <div class="row">
+      <label for="attendance">Attendance (0 - 100)</label>
+      <input id="attendance" type="number" min="0" max="100" step="0.01" />
+    </div>
+
+    <div class="row">
+      <label for="lab1">Lab Work 1 (0 - 100)</label>
+      <input id="lab1" type="number" min="0" max="100" step="0.01" />
+    </div>
+
+    <div class="row">
+      <label for="lab2">Lab Work 2 (0 - 100)</label>
+      <input id="lab2" type="number" min="0" max="100" step="0.01" />
+    </div>
+
+    <div class="row">
+      <label for="lab3">Lab Work 3 (0 - 100)</label>
+      <input id="lab3" type="number" min="0" max="100" step="0.01" />
+    </div>
+
+    <div class="controls">
+      <button id="calcBtn">Calculate</button>
+    </div>
+
+    <div id="results" aria-live="polite"></div>
+    <div class="muted">Formula used: PrelimGrade = (PrelimExam * 0.30) + (ClassStanding * 0.70)</div>
+  </div>
+
+<script>
+  function fmt(n) { return Number.isFinite(n) ? n.toFixed(2) : n; }
+
+  document.getElementById('calcBtn').addEventListener('click', () => {
+    const a = parseFloat(document.getElementById('attendance').value);
+    const l1 = parseFloat(document.getElementById('lab1').value);
+    const l2 = parseFloat(document.getElementById('lab2').value);
+    const l3 = parseFloat(document.getElementById('lab3').value);
+
+    const results = document.getElementById('results');
+
+    if ([a, l1, l2, l3].some(v => isNaN(v))) {
+      results.textContent = 'Please fill in all fields with numbers between 0 and 100.';
+      return;
+    }
+    if ([a, l1, l2, l3].some(v => v < 0 || v > 100)) {
+      results.textContent = 'All inputs must be between 0 and 100.';
+      return;
+    }
+
+    // Lab average and class standing
+    const labAvg = (l1 + l2 + l3) / 3.0;
+    const classStanding = (a * 0.40) + (labAvg * 0.60);
+
+    // Correct formula: RequiredExam = (Target - (ClassStanding * 0.70)) / 0.30
+    const reqPass = (75.0 - (classStanding * 0.70)) / 0.30;
+    const reqExcellent = (100.0 - (classStanding * 0.70)) / 0.30;
+
+    let out = '';
+    out += `Computed values\n`;
+    out += `-------------------------------\n`;
+    out += `Attendance score       : ${fmt(a)}\n`;
+    out += `Lab Work 1             : ${fmt(l1)}\n`;
+    out += `Lab Work 2             : ${fmt(l2)}\n`;
+    out += `Lab Work 3             : ${fmt(l3)}\n`;
+    out += `Lab Work Average       : ${fmt(labAvg)}\n`;
+    out += `Class Standing (component for final, 70%) : ${fmt(classStanding)}\n\n`;
+
+    out += `Required Prelim Exam to PASS (final = 75)\n`;
+    out += `-------------------------------\n`;
+    if (reqPass <= 0) {
+      out += `Required Exam (pass)   : 0.00\n`;
+      out += `Remark                 : No exam needed to reach a passing final grade.\n`;
+    } else if (reqPass > 100) {
+      out += `Required Exam (pass)   : >100\n`;
+      out += `Remark                 : Even a perfect exam cannot reach a passing final grade.\n`;
+    } else {
+      out += `Required Exam (pass)   : ${fmt(reqPass)}\n`;
+      out += `Remark                 : You need at least ${fmt(reqPass)}% on the exam to reach 75.\n`;
+    }
+    out += `\n`;
+
+    out += `Required Prelim Exam to ACHIEVE EXCELLENT (final = 100)\n`;
+    out += `-------------------------------\n`;
+    if (reqExcellent <= 0) {
+      out += `Required Exam (excellent): 0.00\n`;
+      out += `Remark                   : Current standing already yields excellent without exam.\n`;
+    } else if (reqExcellent > 100) {
+      out += `Required Exam (excellent): >100\n`;
+      out += `Remark                   : Even a perfect exam cannot reach excellent.\n`;
+    } else {
+      out += `Required Exam (excellent): ${fmt(reqExcellent)}\n`;
+      out += `Remark                   : You need at least ${fmt(reqExcellent)}% on the exam to reach 100.\n`;
+    }
+
+    results.textContent = out;
+  });
+</script>
+</body>
+</html>
