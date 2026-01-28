@@ -5,19 +5,17 @@
   <title>Prelim Lab Work 3 — Calculator</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root {
-      --teal: #9BE9D8;
-      --purple: #69328F;
-    }
+    :root { --teal: #9BE9D8; --purple: #69328F; }
+    html,body { height:100%; margin:0; }
     body {
       background: var(--teal);
       font-family: "Segoe UI", Roboto, Arial, sans-serif;
-      margin: 0;
-      padding: 28px;
       color: #222;
+      padding: 28px;
+      -webkit-font-smoothing:antialiased;
     }
     .card {
-      max-width: 820px;
+      max-width: 920px;
       margin: 0 auto;
       background: #fff;
       border: 3px solid var(--purple);
@@ -25,7 +23,7 @@
       padding: 20px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     }
-    h1 { color: var(--purple); text-align: center; margin: 0 0 18px 0; }
+    h1 { color: var(--purple); text-align:center; margin:0 0 18px 0; font-size:22px; }
     .row {
       display: flex;
       gap: 12px;
@@ -33,26 +31,32 @@
       align-items: center;
     }
     label {
-      width: 220px;
+      width: 320px;
       font-weight: 600;
       color: var(--purple);
     }
-    input[type="number"] {
+    input[type="number"], select {
       flex: 1;
       padding: 10px 12px;
       border-radius: 6px;
       border: 2px solid var(--purple);
-      font-size: 16px;
+      font-size: 15px;
     }
-    .controls { display: flex; justify-content: center; margin-top: 14px; }
+    input[type="checkbox"] { transform: scale(1.1); margin-left:6px; }
+    .controls { display:flex; justify-content:center; gap:12px; margin-top:14px; }
     button {
       background: var(--purple);
       color: #fff;
       border: none;
       padding: 10px 18px;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
+    }
+    button.secondary {
+      background: #fff;
+      color: var(--purple);
+      border: 2px solid var(--purple);
     }
     button:hover { filter: brightness(.95); }
     #results {
@@ -64,102 +68,238 @@
       white-space: pre-wrap;
       font-family: Consolas, monospace;
       font-size: 14px;
+      min-height: 120px;
     }
-    .muted { color: #555; font-size: 13px; }
+    .muted { color: #555; font-size: 13px; margin-top:8px; }
+    .small { font-size:13px; color:#444; }
+    .inline {
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    @media (max-width:760px) {
+      label { width: 150px; }
+      .row { flex-direction: column; align-items:stretch; }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Prelim Exam Score Calculator</h1>
+  <div class="card" role="main" aria-labelledby="title">
+    <h1 id="title">Prelim Exam Score Calculator</h1>
 
     <div class="row">
-      <label for="attendance">Attendance (0 - 100)</label>
-      <input id="attendance" type="number" min="0" max="100" step="0.01" />
+      <label for="weeks">Total Prelim Weeks (no exam week)</label>
+      <input id="weeks" type="number" min="1" step="1" placeholder="e.g. 10">
     </div>
 
     <div class="row">
+      <label>Late enrollee?</label>
+      <div class="inline">
+        <select id="late" aria-label="Late enrollee">
+          <option value="no">No</option>
+          <option value="yes">Yes</option>
+        </select>
+        <div class="small">If yes, set weeks missed before enrollment</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <label for="lateWeeks">Weeks missed before enrollment</label>
+      <input id="lateWeeks" type="number" min="0" step="1" value="0" disabled>
+    </div>
+
+    <div class="row">
+      <label for="absences">Total Absences</label>
+      <input id="absences" type="number" min="0" step="1" placeholder="e.g. 2">
+    </div>
+
+    <div class="row">
+      <label for="excuse">Has valid excuse?</label>
+      <select id="excuse">
+        <option value="no">No</option>
+        <option value="yes">Yes</option>
+      </select>
+    </div>
+
+    <hr style="border:none;border-top:1px dashed #ddd;margin:12px 0;">
+
+    <div class="row">
       <label for="lab1">Lab Work 1 (0 - 100)</label>
-      <input id="lab1" type="number" min="0" max="100" step="0.01" />
+      <input id="lab1" type="number" min="0" max="100" step="0.01" placeholder="e.g. 80">
     </div>
 
     <div class="row">
       <label for="lab2">Lab Work 2 (0 - 100)</label>
-      <input id="lab2" type="number" min="0" max="100" step="0.01" />
+      <input id="lab2" type="number" min="0" max="100" step="0.01" placeholder="e.g. 75">
     </div>
 
     <div class="row">
       <label for="lab3">Lab Work 3 (0 - 100)</label>
-      <input id="lab3" type="number" min="0" max="100" step="0.01" />
+      <input id="lab3" type="number" min="0" max="100" step="0.01" placeholder="e.g. 90">
     </div>
 
     <div class="controls">
       <button id="calcBtn">Calculate</button>
+      <button id="clearBtn" class="secondary">Clear</button>
     </div>
 
     <div id="results" aria-live="polite"></div>
-    <div class="muted">Formula used: PrelimGrade = (PrelimExam * 0.30) + (ClassStanding * 0.70)</div>
+    <div class="muted">Formula used: PrelimGrade = (PrelimExam × 0.30) + (ClassStanding × 0.70) — ClassStanding = (Attendance% × 0.40) + (LabAvg × 0.60)</div>
   </div>
 
 <script>
-  function fmt(n) { return Number.isFinite(n) ? n.toFixed(2) : n; }
+  // Helper: format to 2 decimals
+  function fmt(n){ return Number.isFinite(n) ? n.toFixed(2) : n; }
 
-  document.getElementById('calcBtn').addEventListener('click', () => {
-    const a = parseFloat(document.getElementById('attendance').value);
-    const l1 = parseFloat(document.getElementById('lab1').value);
-    const l2 = parseFloat(document.getElementById('lab2').value);
-    const l3 = parseFloat(document.getElementById('lab3').value);
+  // Elements
+  const weeks = document.getElementById('weeks');
+  const late = document.getElementById('late');
+  const lateWeeks = document.getElementById('lateWeeks');
+  const absences = document.getElementById('absences');
+  const excuse = document.getElementById('excuse');
+  const lab1 = document.getElementById('lab1');
+  const lab2 = document.getElementById('lab2');
+  const lab3 = document.getElementById('lab3');
+  const calcBtn = document.getElementById('calcBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const results = document.getElementById('results');
 
-    const results = document.getElementById('results');
+  // Enable/disable lateWeeks when late changes
+  late.addEventListener('change', () => {
+    if (late.value === 'yes') {
+      lateWeeks.disabled = false;
+      if (lateWeeks.value === '') lateWeeks.value = 0;
+    } else {
+      lateWeeks.disabled = true;
+      lateWeeks.value = 0;
+    }
+  });
 
-    if ([a, l1, l2, l3].some(v => isNaN(v))) {
-      results.textContent = 'Please fill in all fields with numbers between 0 and 100.';
+  // Clear action
+  clearBtn.addEventListener('click', () => {
+    weeks.value = '';
+    late.value = 'no';
+    lateWeeks.value = 0;
+    lateWeeks.disabled = true;
+    absences.value = '';
+    excuse.value = 'no';
+    lab1.value = '';
+    lab2.value = '';
+    lab3.value = '';
+    results.textContent = '';
+  });
+
+  // Main calculation
+  calcBtn.addEventListener('click', () => {
+    results.textContent = ''; // clear prior
+
+    // Parse inputs safely
+    const totalWeeks = Number(weeks.value);
+    const isLate = late.value === 'yes';
+    const missedBefore = Number(lateWeeks.value) || 0;
+    const abs = Number(absences.value);
+    const hasExcuse = excuse.value === 'yes';
+    const g1 = Number(lab1.value);
+    const g2 = Number(lab2.value);
+    const g3 = Number(lab3.value);
+
+    // Basic validation
+    if (!Number.isFinite(totalWeeks) || totalWeeks < 1) {
+      results.textContent = 'Please enter a valid Total Prelim Weeks (minimum 1).';
+      weeks.focus();
       return;
     }
-    if ([a, l1, l2, l3].some(v => v < 0 || v > 100)) {
-      results.textContent = 'All inputs must be between 0 and 100.';
+    if (!Number.isFinite(missedBefore) || missedBefore < 0) {
+      results.textContent = 'Invalid weeks missed before enrollment.';
+      lateWeeks.focus();
+      return;
+    }
+    if (missedBefore >= totalWeeks) {
+      results.textContent = 'Weeks missed before enrollment must be less than total weeks.';
+      lateWeeks.focus();
+      return;
+    }
+    if (!Number.isFinite(abs) || abs < 0) {
+      results.textContent = 'Please enter a valid number of absences (0 or greater).';
+      absences.focus();
       return;
     }
 
-    // Lab average and class standing
-    const labAvg = (l1 + l2 + l3) / 3.0;
-    const classStanding = (a * 0.40) + (labAvg * 0.60);
+    const countedWeeks = isLate ? (totalWeeks - missedBefore) : totalWeeks;
+    if (countedWeeks <= 0) {
+      results.textContent = 'Counted weeks must be at least 1. Check your inputs.';
+      return;
+    }
+    if (abs > countedWeeks) {
+      results.textContent = 'Absences cannot exceed counted weeks.';
+      absences.focus();
+      return;
+    }
 
-    // Correct formula: RequiredExam = (Target - (ClassStanding * 0.70)) / 0.30
+    // Check lab inputs
+    if (![g1,g2,g3].every(v => Number.isFinite(v) && v >= 0 && v <= 100)) {
+      results.textContent = 'Please enter all lab grades between 0 and 100.';
+      return;
+    }
+
+    // Automatic fail rule
+    if (abs >= 4 && !hasExcuse) {
+      let out = '';
+      out += 'AUTOMATIC FAIL\n';
+      out += '-------------------------------\n';
+      out += 'Reason: 4 or more absences without a valid excuse.\n';
+      out += `Total prelim weeks counted: ${countedWeeks}\n`;
+      out += `Absences reported         : ${abs}\n`;
+      results.textContent = out;
+      return;
+    }
+
+    // Attendance percentage
+    const attended = countedWeeks - abs;
+    const attendancePct = (attended / countedWeeks) * 100.0;
+
+    // Lab average and class standing (attendance contributes 40% of class standing)
+    const labAvg = (g1 + g2 + g3) / 3.0;
+    const classStanding = (attendancePct * 0.40) + (labAvg * 0.60);
+
+    // Solve required exam: RequiredExam = (Target - (ClassStanding * 0.70)) / 0.30
     const reqPass = (75.0 - (classStanding * 0.70)) / 0.30;
     const reqExcellent = (100.0 - (classStanding * 0.70)) / 0.30;
 
+    // Build output
     let out = '';
-    out += `Computed values\n`;
-    out += `-------------------------------\n`;
-    out += `Attendance score       : ${fmt(a)}\n`;
-    out += `Lab Work 1             : ${fmt(l1)}\n`;
-    out += `Lab Work 2             : ${fmt(l2)}\n`;
-    out += `Lab Work 3             : ${fmt(l3)}\n`;
-    out += `Lab Work Average       : ${fmt(labAvg)}\n`;
-    out += `Class Standing (component for final, 70%) : ${fmt(classStanding)}\n\n`;
+    out += 'Computed values\n';
+    out += '-------------------------------\n';
+    out += `Total prelim weeks counted : ${countedWeeks}\n`;
+    if (isLate) out += `Late enrollee, weeks missed before enrollment: ${missedBefore}\n`;
+    out += `Attended weeks             : ${attended}\n`;
+    out += `Attendance percentage      : ${fmt(attendancePct)}%\n`;
+    out += `Lab Work 1                 : ${fmt(g1)}\n`;
+    out += `Lab Work 2                 : ${fmt(g2)}\n`;
+    out += `Lab Work 3                 : ${fmt(g3)}\n`;
+    out += `Lab Work Average           : ${fmt(labAvg)}\n`;
+    out += `Class Standing (component for final, 70%): ${fmt(classStanding)}\n\n`;
 
-    out += `Required Prelim Exam to PASS (final = 75)\n`;
-    out += `-------------------------------\n`;
+    out += 'Required Prelim Exam to PASS (final = 75)\n';
+    out += '-------------------------------\n';
     if (reqPass <= 0) {
-      out += `Required Exam (pass)   : 0.00\n`;
-      out += `Remark                 : No exam needed to reach a passing final grade.\n`;
+      out += 'Required Exam (pass)   : 0.00\n';
+      out += 'Remark                 : No exam needed to reach a passing final grade.\n';
     } else if (reqPass > 100) {
-      out += `Required Exam (pass)   : >100\n`;
-      out += `Remark                 : Even a perfect exam cannot reach a passing final grade.\n`;
+      out += 'Required Exam (pass)   : >100\n';
+      out += 'Remark                 : Even a perfect exam cannot reach a passing final grade.\n';
     } else {
       out += `Required Exam (pass)   : ${fmt(reqPass)}\n`;
       out += `Remark                 : You need at least ${fmt(reqPass)}% on the exam to reach 75.\n`;
     }
-    out += `\n`;
+    out += '\n';
 
-    out += `Required Prelim Exam to ACHIEVE EXCELLENT (final = 100)\n`;
-    out += `-------------------------------\n`;
+    out += 'Required Prelim Exam to ACHIEVE EXCELLENT (final = 100)\n';
+    out += '-------------------------------\n';
     if (reqExcellent <= 0) {
-      out += `Required Exam (excellent): 0.00\n`;
-      out += `Remark                   : Current standing already yields excellent without exam.\n`;
+      out += 'Required Exam (excellent): 0.00\n';
+      out += 'Remark                   : Current standing already yields excellent without exam.\n';
     } else if (reqExcellent > 100) {
-      out += `Required Exam (excellent): >100\n`;
-      out += `Remark                   : Even a perfect exam cannot reach excellent.\n`;
+      out += 'Required Exam (excellent): >100\n';
+      out += 'Remark                   : Even a perfect exam cannot reach excellent.\n';
     } else {
       out += `Required Exam (excellent): ${fmt(reqExcellent)}\n`;
       out += `Remark                   : You need at least ${fmt(reqExcellent)}% on the exam to reach 100.\n`;
