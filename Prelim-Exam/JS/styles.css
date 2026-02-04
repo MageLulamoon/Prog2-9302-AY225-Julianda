@@ -1,0 +1,11 @@
+body { font-family: Arial, Helvetica, sans-serif; margin: 24px; color: #222; }
+main { max-width: 900px; margin: auto; }
+h1 { margin-bottom: 12px; }
+#controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+#controls label { display:flex; gap:6px; align-items:center; }
+#recordsTable { width:100%; border-collapse:collapse; }
+#recordsTable th, #recordsTable td { border:1px solid #ddd; padding:8px; text-align:left; }
+#recordsTable th { background:#f3f3f3; }
+button { padding:6px 10px; cursor:pointer; }
+footer { margin-top:16px; font-weight:bold; }
+.action-btn { padding:4px 8px; }
